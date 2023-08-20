@@ -1,3 +1,4 @@
+// Inicializa la conexión WebSocket
 export function initWebSocket() {
     const ws = new WebSocket('ws://10.1.2.7:5000/ws');
   
@@ -11,4 +12,9 @@ export function initWebSocket() {
       // Aquí puedes actualizar tu estado o hacer lo que necesites con los datos recibidos
     });
   }
+  
+  // Inicializa la conexión WebSocket cuando se carga la página
+  window.addEventListener('load', () => {
+    initWebSocket();
+  });
   
