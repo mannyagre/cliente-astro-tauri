@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Card from '../components/Card.astro';
+import { initWebSocket } from '../components/websocket.js';
 ---
 
 <Layout title="Welcome to Astro.">
@@ -60,6 +61,9 @@ import Card from '../components/Card.astro';
 				body="Come say hi to our amazing Discord community. ❤️"
 			/>
 		</ul>
+	<script>
+		initWebSocket();
+	</script>
 	</main>
 </Layout>
 
