@@ -3,9 +3,6 @@ window.addEventListener('load', () => {
   initWebSocket();
 });
 
-const agentData = {};
-const agentCharts = {};
-
 // Inicializa la conexión WebSocket
 export function initWebSocket() {
   const ws = new WebSocket('ws://10.1.2.7:5000/ws');
@@ -83,35 +80,29 @@ function createAgentDiv(hostname) {
     </div>
   `;
   container.appendChild(agentDiv);
-  const ctx = document.getElementById(`chart-${hostname}`).getContext('2d');
-  const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      datasets: [{
-        label: 'Uso de CPU',
-        data: [],
-        fill: false,
-        borderColor: 'rgb(75, 192, 192)',
-        tension: 0.1
-      }]
+  const options = {
+    chart: {
+      id: `agent-${hostname}`,
+      type: 'area',
+      height: 350,
+      width: '100%',
+      animations: {
+        enabled: false,  // Desactivar animaciones
+      },
     },
-    options: {
-      scales: {
-        x: {
-          type: 'time',
-          time: {
-            unit: 'second'
-          }
-        },
-        y: {
-          beginAtZero: true
-        }
-      }
+    series: [{
+      name: 'Uso de CPU',
+      data: []
+    }],
+    xaxis: {
+      type: 'datetime'
     }
-  });
+  };
 
-  agentCharts[hostname] = chart;
+  const chart = new ApexCharts(document.querySelector(`#agent-${hostname} .AreaChart-foco`), options);
+  chart.render();
 }
+const agentData = {};
 // Actualiza la información del agente en la página
 function updatePage(hostname, latestMessage) {
   // Redondear los números a enteros
@@ -128,21 +119,24 @@ function updatePage(hostname, latestMessage) {
   document.getElementById(`prevtextalmacenamiento-${hostname}`).textContent = `${storageUsed}%`;
   document.getElementById(`prevtextmemoria-${hostname}`).textContent = `${ramUsed}/${ramTotal} GB`;
   document.getElementById(`prevtextmadre-${hostname}`).textContent = `${motherboardTemp}°`;
-  const chart = agentCharts[hostname];
-
+  const chart = ApexCharts.getChartByID(`agent-${hostname}`);
+  
   if (chart) {
+    // Inicializa el array de datos para este agente si aún no existe
     if (!agentData[hostname]) {
       agentData[hostname] = [];
     }
 
-    agentData[hostname].push({ x: new Date(), y: parseFloat(latestMessage['Procesador']['Uso de CPU']) });
+    // Añade el nuevo punto de datos
+    agentData[hostname].push({ x: new Date(), y: cpuUsage });
 
+    // Limita a los últimos 30 puntos de datos
     if (agentData[hostname].length > 30) {
       agentData[hostname].shift();
     }
 
-    chart.data.datasets[0].data = agentData[hostname];
-    chart.update('quiet');
+    // Actualiza la serie completa
+    chart.updateSeries([{ data: agentData[hostname] }]);
   } else {
     console.error(`No se pudo encontrar la gráfica para el agente ${hostname}`);
   }
