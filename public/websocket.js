@@ -3,6 +3,9 @@ window.addEventListener('load', () => {
   initWebSocket();
 });
 
+const agentData = {};
+const agentCharts = {};
+
 // Inicializa la conexión WebSocket
 export function initWebSocket() {
   const ws = new WebSocket('ws://10.1.2.7:5000/ws');
@@ -80,8 +83,35 @@ function createAgentDiv(hostname) {
     </div>
   `;
   container.appendChild(agentDiv);
-}
+  const ctx = document.getElementById(`chart-${hostname}`).getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [{
+        label: 'Uso de CPU',
+        data: [],
+        fill: false,
+        borderColor: 'rgb(75, 192, 192)',
+        tension: 0.1
+      }]
+    },
+    options: {
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'second'
+          }
+        },
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
 
+  agentCharts[hostname] = chart;
+}
 // Actualiza la información del agente en la página
 function updatePage(hostname, latestMessage) {
   // Redondear los números a enteros
@@ -98,4 +128,22 @@ function updatePage(hostname, latestMessage) {
   document.getElementById(`prevtextalmacenamiento-${hostname}`).textContent = `${storageUsed}%`;
   document.getElementById(`prevtextmemoria-${hostname}`).textContent = `${ramUsed}/${ramTotal} GB`;
   document.getElementById(`prevtextmadre-${hostname}`).textContent = `${motherboardTemp}°`;
+  const chart = agentCharts[hostname];
+
+  if (chart) {
+    if (!agentData[hostname]) {
+      agentData[hostname] = [];
+    }
+
+    agentData[hostname].push({ x: new Date(), y: parseFloat(latestMessage['Procesador']['Uso de CPU']) });
+
+    if (agentData[hostname].length > 30) {
+      agentData[hostname].shift();
+    }
+
+    chart.data.datasets[0].data = agentData[hostname];
+    chart.update('quiet');
+  } else {
+    console.error(`No se pudo encontrar la gráfica para el agente ${hostname}`);
+  }
 }
