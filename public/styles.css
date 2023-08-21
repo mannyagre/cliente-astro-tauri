@@ -37,7 +37,7 @@
   
   .Info-del-componente { grid-area: Info-del-componente; }
   
-  .AreaChart-foco { grid-area: AreaChart-foco; }
+  .AreaChart-foco { grid-area: AreaChart-foco; background: #000524; }
   
   .Menu {  display: grid;
     grid-template-columns: 0.9fr 1.1fr;
